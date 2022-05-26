@@ -4,10 +4,12 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.ServiceConnection
 import android.graphics.ImageFormat
+import android.graphics.Point
 import android.media.ImageReader
 import android.os.IBinder
 import android.os.SystemClock
 import android.util.Log
+import android.view.WindowManager
 import com.baidu.duermirror.*
 import com.baidu.duermirror.aiclient.AiServiceClient
 import com.xinfan.forest.botsdk.BotInitCallBack
@@ -268,6 +270,19 @@ object AIProxy {
     fun unRegisterVideoFrameListener() {
 //        aiServiceClient.unRegisterVideoFrameListener(mImageReader)
     }
+
+    fun checkOneOrMini() {
+        // 获取设备宽度
+        var width = 0;
+        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val display = wm.defaultDisplay
+        val size = Point()
+        display.getSize(size)
+        width = size.x
+        Log.d(TAG, "checkOneOrMini: 获取的屏幕宽度是::" + width)
+        UnityCommunication.sendClientWidth(width.toString())
+    }
+
 
 
     fun notifyDownload() {

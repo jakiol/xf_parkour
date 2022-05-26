@@ -153,6 +153,11 @@ object UnityCommunication {
         SendUnity("", "sendNotifyDownloadOk")
     }
 
+    fun sendClientWidth(width: String) {
+        SendUnity(width, "sendClientWidth")
+    }
+
+
 //    /**
 //     * 更新头框数据
 //     *

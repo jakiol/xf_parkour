@@ -10,8 +10,11 @@ android {
         applicationId "com.xinfan.forest"
         minSdk 26
         targetSdk 30
-        versionCode 10024
-        versionName "1.2.4"
+        versionCode 10025
+        versionName "1.2.5"
+        ndk {
+            abiFilters 'armeabi-v7a'
+        }
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

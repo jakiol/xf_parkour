@@ -149,6 +149,27 @@ public class Sdktest : MonoBehaviour
 
     }
 
+    // 去查找确认是一代还是二代镜子
+    public void checkOneOrMini()
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        if(jo_AndroidTool != null){
+            jo_AndroidTool.Call("checkOneOrMini");
+        }
+#endif
+
+
+    }
+
+    // 监听返回的镜子宽度，以此确定是几代镜子
+    public void sendClientWidth(string width)
+    {
+        int screenWidth = int.Parse(width);
+        Debug.Log("返回的屏幕宽度数据是:: " + screenWidth);
+        UserData.screenWidth = screenWidth;
+    }
+
+
 
     /// <summary>
     /// 开启Body数据

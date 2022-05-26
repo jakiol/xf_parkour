@@ -141,7 +141,18 @@ public class Controller : MonoBehaviour{
             }
 
             //左右
-            float midX = (person.skeletons.leftShoulder.x + person.skeletons.rightShoulder.x) * 0.5f;
+
+            float midX;
+            Debug.Log("左右执行..." + UserData.screenWidth);
+            if (UserData.screenWidth > 800)
+            {
+                midX = (person.skeletons.leftShoulder.x + person.skeletons.rightShoulder.x) * 0.5f;
+            }
+            else
+            {
+                midX = (person.skeletons.leftShoulder.x + person.skeletons.rightShoulder.x) * 0.5f * 0.6f;
+            }
+
             smoothMid = Mathf.Clamp01(midX / Screen.width);
             
             float halfCW = 0.1f; // center_w_slider.value * 0.5f;
@@ -409,7 +420,18 @@ public class Controller : MonoBehaviour{
     private Vector3 ApplyXMovement(Vector3 position){
         Vector3 currentPos = player.transform.position;
         Vector3 nextPos = Vector3.right * playerX;
-        return new Vector3((nextPos - currentPos).x, position.y, position.z);
+        float posX;
+        if (UserData.screenWidth > 800)
+        {
+            posX = (nextPos - currentPos).x;
+        }
+        else
+        {
+            posX = (nextPos - currentPos).x * 0.65f;
+        }
+
+        return new Vector3(posX, position.y, position.z);
+
     }
 
 

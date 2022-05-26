@@ -62,6 +62,8 @@ public class AndroidTool {
         AIProxy.INSTANCE.unRegisterVideoFrameListener();
     }
 
+    public void checkOneOrMini() {AIProxy.INSTANCE.checkOneOrMini();}
+
 
     public void DebLogTest() {
         UnityCommunication.INSTANCE.DebLog("DebLogTest");

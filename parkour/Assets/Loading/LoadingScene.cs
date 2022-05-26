@@ -24,6 +24,9 @@ public class LoadingScene : MonoBehaviour
         if(delPlayerPrefs) PlayerPrefs.DeleteAll();
         StartCoroutine(LoadSceneFunction());
         Sdktest.Instance.notifyDownload();
+        // 去查找屏幕尺寸
+        Sdktest.Instance.checkOneOrMini();
+
     }
 
     void Update()
