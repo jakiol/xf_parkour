@@ -30,8 +30,8 @@ class MainActivity : UnityPlayerActivity(), IBotIntentCallback, IDialogStateList
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.i(MainActivity.TAG,"启动开始：" + Date());
+
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        getWindow().getDecorView().setBackgroundColor(Color.BLACK);
 
         AndroidTool.Init();
         initAIProxy();
@@ -95,55 +95,6 @@ class MainActivity : UnityPlayerActivity(), IBotIntentCallback, IDialogStateList
         Log.e(TAG, "download md5 = $md5")
         Log.e(TAG, "download course_id = $courseId")
 
-
-//
-//        Log.i(TAG, "解析 - parseModelInfo")
-//
-//        val _url = (intent.extras?.get("url") ?: "") as String
-//        if (_url == "") {
-//
-//            Log.e(TAG, "未检测到模型数据，使用测试模型数据")
-//
-//            val type = "model_download"
-//            val downloadUrl = "https://duer-mirror.cdn.bcebos.com/game_model/1/70001.zip"
-//            val md5 = "ca91d61416094696a8bb04c85fbe32bf"
-//            val courseId = "70001"
-//
-//            AIProxy.type = type
-//            AIProxy.downloadUrl = downloadUrl
-//            AIProxy.md5 = md5
-//            AIProxy.courseId = courseId
-//
-//            Log.i(TAG, "download type = $type")
-//            Log.i(TAG, "download url = $downloadUrl")
-//            Log.i(TAG, "download md5 = $md5")
-//            Log.i(TAG, "download course_id = $courseId")
-//        } else {
-//            val url: Uri = Uri.parse((intent.extras?.get("url") ?: "") as String);
-//
-//            val type = url.getQueryParameter("type")
-//            val downloadUrl = url.getQueryParameter("url")
-//            val md5 = url.getQueryParameter("md5")
-//            val courseId = url.getQueryParameter("course_id")
-//
-//            if (type != null) {
-//                AIProxy.type = type
-//            }
-//            if (downloadUrl != null) {
-//                AIProxy.downloadUrl = downloadUrl
-//            }
-//            if (md5 != null) {
-//                AIProxy.md5 = md5
-//            }
-//            if (courseId != null) {
-//                AIProxy.courseId = courseId
-//            };
-//
-//            Log.i(TAG, "download type = $type")
-//            Log.i(TAG, "download url = $downloadUrl")
-//            Log.i(TAG, "download md5 = $md5")
-//            Log.i(TAG, "download course_id = $courseId")
-//        }
     }
 
 
@@ -244,37 +195,5 @@ class MainActivity : UnityPlayerActivity(), IBotIntentCallback, IDialogStateList
         };
     }
 
-    override fun onPause() {
-        super.onPause()
-        mUnityPlayer!!.pause()
-        Log.i(MainActivity.TAG,"Android - 暂停")
-
-        if (AIProxy.isBind) {
-
-            Log.i(MainActivity.TAG,"Android - 暂停 - 解除绑定")
-
-//            AndroidTool.INSTANCE.unEnableGameActionMatch(1000)
-            AndroidTool.INSTANCE.registerGameActionListener();
-
-            AndroidTool.INSTANCE.CloseResetGameActionList();
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        mUnityPlayer!!.resume()
-
-        Log.i(MainActivity.TAG,"Android - 继续")
-
-        if (AIProxy.isBind) {
-
-            Log.i(MainActivity.TAG,"Android - 继续 - 添加绑定")
-
-//            AndroidTool.INSTANCE.enableGameActionMatch(1000)
-            AndroidTool.INSTANCE.registerGameActionListener();
-
-            AndroidTool.INSTANCE.OpenResetGameActionList();
-        }
-    }
 
 }

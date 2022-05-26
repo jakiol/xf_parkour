@@ -57,7 +57,7 @@ public class StartGame : MonoBehaviour {
     
     private void Update() {
         if (uiDone) {
-            if (Input.GetMouseButtonDown(0) && Input.mousePosition.y < 500) {
+            if (Input.GetMouseButtonDown(0)) {
                 actionTime = 1.1f;
             }
             actionTime -= Time.deltaTime;

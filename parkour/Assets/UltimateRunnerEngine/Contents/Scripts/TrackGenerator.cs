@@ -152,14 +152,14 @@ public class TrackGenerator : MonoBehaviour
         }
     }
 
-    private void FixedUpdate()
-    {
-        StartCoroutine(GenerateTracks());
+    private void FixedUpdate(){
+        GenerateTracks();
+        // StartCoroutine(GenerateTracks());
     }
 
 
 
-    public IEnumerator GenerateTracks()
+    public void GenerateTracks()
     {
 
         float forwardTargetDistance = player.transform.position.z + trackRenderDistance;
@@ -170,7 +170,7 @@ public class TrackGenerator : MonoBehaviour
             StartCoroutine(clearTracksAndObjectsBehind());
         }
 
-        while (trackCurrentZ < forwardTargetDistance)
+        if (trackCurrentZ < forwardTargetDistance)
         {
 
             // Getting an empty track
@@ -186,14 +186,14 @@ public class TrackGenerator : MonoBehaviour
 
 
             // Populating selected Track
-            StartCoroutine(populateTrack(currentTrack));
+            populateTrack(currentTrack);
 
             currentTrack.transform.position = (Vector3)(Vector3.forward * trackCurrentZ);
             trackCurrentZ += currentTrack.GetComponent<Track>().zSize;
 
         }
 
-        yield break;
+        // yield break;
 
     }
 
@@ -346,20 +346,17 @@ public class TrackGenerator : MonoBehaviour
         return false;
     }
 
-    IEnumerator populateTrack(GameObject track)
-    {
+    private void populateTrack(GameObject track){
 
         Transform trackObjectsRoot = track.transform.Find("trackObjects");
 
         // No Track Objects
-        if (trackObjectsRoot == null) yield break;
+        if (trackObjectsRoot != null){
+            // Activating Decor Animators
+            DecorAnimation.activeTrackDecors(track.GetComponent<Track>().ID, true);
 
-        // Activating Decor Animators
-        DecorAnimation.activeTrackDecors(track.GetComponent<Track>().ID, true);
-
-        populateTrackObjects(trackObjectsRoot);
-
-        yield break;
+            populateTrackObjects(trackObjectsRoot);
+        }
     }
 
 
@@ -444,13 +441,13 @@ public class TrackGenerator : MonoBehaviour
 
                                     CoinLine CurrencyLine_placeHolder = currentTrackObject.GetComponent<CoinLine>();
                                     CoinLine CurrencyLine_selected = selectedObject.GetComponent<CoinLine>();
-
+                                    
                                     if (CurrencyLine_placeHolder != null && CurrencyLine_selected != null)
                                     {
                                         CurrencyLine_selected.coinSpacing = CurrencyLine_placeHolder.coinSpacing;
                                         CurrencyLine_selected.length = CurrencyLine_placeHolder.length;
                                         CurrencyLine_selected.coinLineRefraction = CurrencyLine_placeHolder.coinLineRefraction;
-
+                                    
                                         CurrencyLine_selected.doActive();
                                     }
 
@@ -458,12 +455,12 @@ public class TrackGenerator : MonoBehaviour
                                 case TrackObject.ObjectType.PointsCurve:
                                     CoinCurve CurrencyCurve_placeHolder = currentTrackObject.GetComponent<CoinCurve>();
                                     CoinCurve CurrencyCurve_selected = selectedObject.GetComponent<CoinCurve>();
-
+                                    
                                     if (CurrencyCurve_placeHolder != null && CurrencyCurve_selected != null)
                                     {
                                         CurrencyCurve_selected.offsetObject = null;
                                         CurrencyCurve_selected.offsetObject = CurrencyCurve_placeHolder.offsetObject;
-
+                                    
                                         CurrencyCurve_selected.doActive();
                                     }
 
@@ -665,9 +662,7 @@ public class TrackGenerator : MonoBehaviour
         return null;
     }
 
-    public GameObject getRandomTrackObjectByType(TrackObject.ObjectType objectType)
-    {
-
+    public GameObject getRandomTrackObjectByType(TrackObject.ObjectType objectType){
         List<GameObject> randomPool = new List<GameObject>();
 
         foreach (GameObject currentObject in trackObjectPool)

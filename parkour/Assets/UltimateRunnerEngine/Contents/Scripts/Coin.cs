@@ -31,8 +31,14 @@ public class Coin : MonoBehaviour
         {
             GameGlobals.Instance.audioController.playSoundPitched("PowerupCoin", 1.0f);
         }
-        
         audioPitch = 0;
+
+        TrackObject to = GetComponent<TrackObject>();
+        if (to){
+            to.positioned = false;
+            gameObject.SetActive(false);
+        }
+
 
     }
 

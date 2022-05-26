@@ -95,7 +95,7 @@ public class CharacterObstacle : MonoBehaviour
 
                 if (hitEffect != null)
                 {
-                    GameObject.Instantiate(hitEffect, new Vector3(this.transform.position.x, this.transform.position.y + 5.0f, this.transform.position.z), Quaternion.identity);
+                    GameObject effect = Instantiate(hitEffect, new Vector3(this.transform.position.x, this.transform.position.y + 5.0f, this.transform.position.z), Quaternion.identity);
                 }
 
 

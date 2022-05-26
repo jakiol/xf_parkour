@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -15,6 +16,7 @@ public class Controller : MonoBehaviour{
 
     private CharacterController characterController;
     private CapsuleCollider characterCollider;
+    private GameObject playerController;
     private ColliderTrigger characterColliderTrigger;
 
     private Animator playerAnimator;
@@ -37,9 +39,10 @@ public class Controller : MonoBehaviour{
         Instance = this;
 
         characterController = player.GetComponent<CharacterController>();
-
-        characterCollider = GameObject.Find("playerController").GetComponent<CapsuleCollider>();
-        playerAnimator = GameObject.Find("playerController").GetComponent<Animator>();
+        playerController = player.transform.Find("playerController").gameObject;
+        characterCollider = playerController.GetComponent<CapsuleCollider>();
+        playerAnimator = playerController.GetComponent<Animator>();
+        
         effetcsRoot = GameObject.Find("EffetcsRoot");
 
         //Physics.IgnoreCollision(characterCollider, characterController);
@@ -56,8 +59,7 @@ public class Controller : MonoBehaviour{
 
 
         Reset();
-
-        Debug.Log("--- Controller");
+        
         //镜子姿势
         //Sdktest.Instance.GameActionEvent = OnGameActionEventHandle;
     }
@@ -140,9 +142,8 @@ public class Controller : MonoBehaviour{
 
             //左右
             float midX = (person.skeletons.leftShoulder.x + person.skeletons.rightShoulder.x) * 0.5f;
-            float screenX = Mathf.Clamp01(midX / Screen.width);
-            smoothMid = Mathf.Lerp(smoothMid, screenX, Time.deltaTime * 12f);
-
+            smoothMid = Mathf.Clamp01(midX / Screen.width);
+            
             float halfCW = 0.1f; // center_w_slider.value * 0.5f;
             float tolerance = 0.02f; // tolerance_slider.value;
             switch (playerPath){
@@ -206,19 +207,19 @@ public class Controller : MonoBehaviour{
     }
 
     public void setCharacter(GameObject cloneCharacter){
-        GameObject controller = player.transform.Find("playerController").gameObject;
-        if (!controller){
-            controller = Instantiate(cloneCharacter, new Vector3(0, 0, 0), Quaternion.identity);
+
+        if (!playerController){
+            playerController = Instantiate(cloneCharacter, new Vector3(0, 0, 0), Quaternion.identity);
         }
 
-        if (controller != null){
-            controller.transform.SetParent(player.gameObject.transform);
-            controller.transform.localPosition = new Vector3(0, 0, 0);
+        if (playerController != null){
+            playerController.transform.SetParent(player.gameObject.transform);
+            playerController.transform.localPosition = new Vector3(0, 0, 0);
 
-            controller.SetActive(true);
+            playerController.SetActive(true);
 
             // Animator
-            Animator newPlayerControllerAnimator = controller.GetComponent<Animator>();
+            Animator newPlayerControllerAnimator = playerController.GetComponent<Animator>();
             if (newPlayerControllerAnimator != null){
                 newPlayerControllerAnimator.runtimeAnimatorController = playerRuntimeAnimController;
                 newPlayerControllerAnimator.applyRootMotion = false;
@@ -227,7 +228,7 @@ public class Controller : MonoBehaviour{
             }
 
             // Rigidbody
-            Rigidbody newRigidBody = controller.GetComponent<Rigidbody>();
+            Rigidbody newRigidBody = playerController.GetComponent<Rigidbody>();
             if (newRigidBody != null){
                 newRigidBody.mass = 1;
                 newRigidBody.drag = 0;
@@ -239,7 +240,7 @@ public class Controller : MonoBehaviour{
             }
 
             // Capsule Collider
-            CapsuleCollider newCapsuleCollider = controller.GetComponent<CapsuleCollider>();
+            CapsuleCollider newCapsuleCollider = playerController.GetComponent<CapsuleCollider>();
             if (newCapsuleCollider != null){
                 newCapsuleCollider.isTrigger = true;
                 newCapsuleCollider.center = new Vector3(0, 2.15f, 0.04f);
@@ -252,7 +253,7 @@ public class Controller : MonoBehaviour{
 
 
             // On Trigger Object
-            ColliderTrigger newPlayerOnTriggerObject = controller.GetComponent<ColliderTrigger>();
+            ColliderTrigger newPlayerOnTriggerObject = playerController.GetComponent<ColliderTrigger>();
             if (newPlayerOnTriggerObject != null){
                 characterColliderTrigger = newPlayerOnTriggerObject;
                 characterColliderTrigger.OnEnter = (ColliderTrigger.OnEnterDelegate) Delegate.Combine(
@@ -263,7 +264,7 @@ public class Controller : MonoBehaviour{
                     new ColliderTrigger.OnExitDelegate(this.OnCharacterColliderExit));
             }
 
-            GameGlobals.Instance.playerController = controller;
+            GameGlobals.Instance.playerController = playerController;
         }
     }
 
@@ -1390,111 +1391,251 @@ public class Controller : MonoBehaviour{
         PowerupPickUp = 5,
         QuicScore = 6
     }
+    
+    private Dictionary<EffetcType, List<EffetcController>> effetcControllerPool = new Dictionary<EffetcType, List<EffetcController>>();
+    private Transform ecPool;
+    private Transform coinPickEffectNode;
 
+    public void recoverAnEffect(EffetcType effect, EffetcController ec){
+        ec.gameObject.SetActive(false);
+        if(!ecPool) ecPool = new GameObject("EcPool").transform;
+        ec.transform.parent = ecPool;
+        if(!effetcControllerPool.ContainsKey(effect)){effetcControllerPool.Add(effect, new List<EffetcController>());}
+        effetcControllerPool[effect].Add(ec);
+    }
+    
     public void doAnEffect(EffetcType effetc){
-        if (effetcsRoot.transform.childCount >= 5 && effetc != EffetcType.QuicScore) return;
-
-        GameObject effetcObject = null;
-        Vector3 effetcPos = player.transform.position;
-
-        foreach (GameObject eObject in effetcs){
-            EffetcController eController = eObject.GetComponent<EffetcController>();
-
-            if (eController != null){
-                switch (effetc){
-                    case EffetcType.None:
-                        break;
-                    case EffetcType.LandingPuff:
-                        if (eController.ID.Equals("puff")){
-                            effetcObject = eObject;
-                            effetcPos = new Vector3(effetcPos.x, 1.0f, effetcPos.z);
-                        }
-
-                        break;
-                    case EffetcType.PointPickup:
-                        if (eController.ID.Equals("point")){
-                            effetcObject = eObject;
-                            effetcPos = new Vector3(effetcPos.x, effetcPos.y + 3.0f, effetcPos.z);
-                        }
-
-                        break;
-                    case EffetcType.PowerupPickUp:
-                        if (eController.ID.Equals("powerup")){
-                            effetcObject = eObject;
-                            effetcPos = new Vector3(effetcPos.x, effetcPos.y + 3.0f, effetcPos.z);
-                        }
-
-                        break;
-
-                    case EffetcType.DeathPuff:
-                        if (eController.ID.Equals("death")){
-                            effetcObject = eObject;
-                            effetcPos = new Vector3(effetcPos.x, effetcPos.y + 3.0f, effetcPos.z + 3.0f);
-                        }
-
-                        break;
-                    case EffetcType.StumplePuff:
-                        if (eController.ID.Equals("stumple")){
-                            effetcObject = eObject;
-                            effetcPos = new Vector3(effetcPos.x, effetcPos.y + 3.0f, effetcPos.z);
-                        }
-
-                        break;
-                    case EffetcType.QuicScore:
-                        if (eController.ID.Equals("quickscore")){
-                            effetcObject = eObject;
-                            effetcPos = new Vector3(effetcPos.x, effetcPos.y + 4.0f, effetcPos.z + 15.0f);
-                        }
-
-                        break;
-                }
-            }
+        if (!coinPickEffectNode){
+            coinPickEffectNode = new GameObject("CoinPickEffectNode").transform;
+            coinPickEffectNode.parent = player.transform;
         }
-
-        if (effetcObject != null){
-            GameObject createdEffetc =
-                (GameObject) GameObject.Instantiate(effetcObject, effetcPos, Quaternion.identity);
-            createdEffetc.transform.parent = effetcsRoot.transform;
-
-            // Quick Score Points
-            if (effetc == EffetcType.QuicScore){
-                int[] points = new int[4]{5, 10, 20, 50};
-                int selectedPoint = points[UnityEngine.Random.Range(0, points.Length)];
-
-                float pitch = 0;
-
-
-                switch (selectedPoint){
-                    case 5:
-                        pitch = 0.9f;
-                        break;
-                    case 10:
-                        pitch = 1.0f;
-                        break;
-                    case 20:
-                        pitch = 1.3f;
-                        break;
-                    case 50:
-                        pitch = 1.6f;
-                        break;
-                }
-
-                GameGlobals.Instance.audioController.playSoundPitched("UIQuestion", pitch);
-                GameGlobals.Instance.achievements.increaseScore(selectedPoint);
-
-                Transform pointsRoot = createdEffetc.transform.Find("pointsGroup");
-                if (pointsRoot != null){
-                    foreach (Transform point in pointsRoot){
-                        if (point.name.Equals(selectedPoint.ToString())){
-                            point.gameObject.SetActive(true);
-                        }
-                        else{
-                            point.gameObject.SetActive(false);
-                        }
+        if (coinPickEffectNode.childCount >= 5 && effetc != EffetcType.QuicScore) return;
+        if(effetc == EffetcType.None) return;
+        
+        //重构特效创建
+        if (!effetcControllerPool.ContainsKey(effetc)){ effetcControllerPool.Add(effetc, new List<EffetcController>()); }
+        List<EffetcController> list = effetcControllerPool[effetc];
+        EffetcController ec = list.Find(et => !et.gameObject.activeSelf);
+        if (!ec){
+            GameObject effetcPrefab = null;
+            foreach (GameObject eObject in effetcs){
+                EffetcController eController = eObject.GetComponent<EffetcController>();
+                if (eController != null){
+                    switch (effetc){
+                        case EffetcType.LandingPuff:
+                            if (eController.ID.Equals("puff")){
+                                effetcPrefab = eObject;
+                            }
+                            break;
+                        case EffetcType.PointPickup:
+                            if (eController.ID.Equals("point")){
+                                effetcPrefab = eObject;
+                            }
+                            break;
+                        case EffetcType.PowerupPickUp:
+                            if (eController.ID.Equals("powerup")){
+                                effetcPrefab = eObject;
+                            }
+                            break;
+                        case EffetcType.DeathPuff:
+                            if (eController.ID.Equals("death")){
+                                effetcPrefab = eObject;
+                            }
+                            break;
+                        case EffetcType.StumplePuff:
+                            if (eController.ID.Equals("stumple")){
+                                effetcPrefab = eObject;
+                            }
+                            break;
+                        case EffetcType.QuicScore:
+                            if (eController.ID.Equals("quickscore")){
+                                effetcPrefab = eObject;
+                            }
+                            break;
                     }
                 }
+                if(effetcPrefab) break;
+            }
+            if (effetcPrefab){
+                GameObject createdEffetc = Instantiate(effetcPrefab);
+                createdEffetc.transform.rotation = Quaternion.identity;
+                ec = createdEffetc.GetComponent<EffetcController>();
             }
         }
+
+        if (ec){
+            Vector3 effetcPos = player.transform.position;
+             switch (ec.ID){ 
+                 case "puff":
+                     effetcPos = new Vector3(effetcPos.x, 1.0f, effetcPos.z);
+                     break; 
+                 case "point":
+                        effetcPos = new Vector3(effetcPos.x, effetcPos.y + 3.0f, effetcPos.z);
+                        break; 
+                 case "powerup":
+                        effetcPos = new Vector3(effetcPos.x, effetcPos.y + 3.0f, effetcPos.z);
+                        break; 
+                 case "death":
+                     effetcPos = new Vector3(effetcPos.x, effetcPos.y + 3.0f, effetcPos.z + 3.0f);
+                     break; 
+                 case "stumple":
+                        effetcPos = new Vector3(effetcPos.x, effetcPos.y + 3.0f, effetcPos.z);
+                        break; 
+                 case "quickscore":
+                        effetcPos = new Vector3(effetcPos.x, effetcPos.y + 4.0f, effetcPos.z + 15.0f);
+                        break;
+             }
+             ec.transform.position = effetcPos;
+
+             if (effetc == EffetcType.QuicScore){
+                 int[] points = new int[4]{5, 10, 20, 50};
+                 int selectedPoint = points[UnityEngine.Random.Range(0, points.Length)];
+
+                 float pitch = 0;
+            
+                 switch (selectedPoint){
+                     case 5:
+                         pitch = 0.9f;
+                         break;
+                     case 10:
+                         pitch = 1.0f;
+                         break;
+                     case 20:
+                         pitch = 1.3f;
+                         break;
+                     case 50:
+                         pitch = 1.6f;
+                         break;
+                 }
+
+                 GameGlobals.Instance.audioController.playSoundPitched("UIQuestion", pitch);
+                 GameGlobals.Instance.achievements.increaseScore(selectedPoint);
+
+                 Transform pointsRoot = ec.transform.Find("pointsGroup");
+                 if (pointsRoot != null){
+                     foreach (Transform point in pointsRoot){
+                         if (point.name.Equals(selectedPoint.ToString())){
+                             point.gameObject.SetActive(true);
+                         }
+                         else{
+                             point.gameObject.SetActive(false);
+                         }
+                     }
+                 }
+             }
+             ec.gameObject.SetActive(true);
+             ec.Setup(ec.ID.Equals("point") ? coinPickEffectNode : effetcsRoot.transform, effetc, this);
+        }
+        
+        
+
+        //
+        // //---------------
+        //
+        // GameObject effetcObject = null;
+        // Vector3 effetcPos = player.transform.position;
+        //
+        // foreach (GameObject eObject in effetcs){
+        //     EffetcController eController = eObject.GetComponent<EffetcController>();
+        //
+        //     if (eController != null){
+        //         switch (effetc){
+        //             case EffetcType.None:
+        //                 break;
+        //             case EffetcType.LandingPuff:
+        //                 if (eController.ID.Equals("puff")){
+        //                     effetcObject = eObject;
+        //                     effetcPos = new Vector3(effetcPos.x, 1.0f, effetcPos.z);
+        //                 }
+        //
+        //                 break;
+        //             case EffetcType.PointPickup:
+        //                 if (eController.ID.Equals("point")){
+        //                     effetcObject = eObject;
+        //                     effetcPos = new Vector3(effetcPos.x, effetcPos.y + 3.0f, effetcPos.z);
+        //                 }
+        //
+        //                 break;
+        //             case EffetcType.PowerupPickUp:
+        //                 if (eController.ID.Equals("powerup")){
+        //                     effetcObject = eObject;
+        //                     effetcPos = new Vector3(effetcPos.x, effetcPos.y + 3.0f, effetcPos.z);
+        //                 }
+        //
+        //                 break;
+        //
+        //             case EffetcType.DeathPuff:
+        //                 if (eController.ID.Equals("death")){
+        //                     effetcObject = eObject;
+        //                     effetcPos = new Vector3(effetcPos.x, effetcPos.y + 3.0f, effetcPos.z + 3.0f);
+        //                 }
+        //
+        //                 break;
+        //             case EffetcType.StumplePuff:
+        //                 if (eController.ID.Equals("stumple")){
+        //                     effetcObject = eObject;
+        //                     effetcPos = new Vector3(effetcPos.x, effetcPos.y + 3.0f, effetcPos.z);
+        //                 }
+        //
+        //                 break;
+        //             case EffetcType.QuicScore:
+        //                 if (eController.ID.Equals("quickscore")){
+        //                     effetcObject = eObject;
+        //                     effetcPos = new Vector3(effetcPos.x, effetcPos.y + 4.0f, effetcPos.z + 15.0f);
+        //                 }
+        //
+        //                 break;
+        //         }
+        //     }
+        //
+        //     if (effetcObject){
+        //         break;
+        //     }
+        // }
+
+        // if (effetcObject != null){
+        //     GameObject createdEffetc = Instantiate(effetcObject, effetcPos, Quaternion.identity);
+        //     createdEffetc.transform.parent = effetcsRoot.transform;
+        //
+        //     // Quick Score Points
+        //     if (effetc == EffetcType.QuicScore){
+        //         int[] points = new int[4]{5, 10, 20, 50};
+        //         int selectedPoint = points[UnityEngine.Random.Range(0, points.Length)];
+        //
+        //         float pitch = 0;
+        //
+        //
+        //         switch (selectedPoint){
+        //             case 5:
+        //                 pitch = 0.9f;
+        //                 break;
+        //             case 10:
+        //                 pitch = 1.0f;
+        //                 break;
+        //             case 20:
+        //                 pitch = 1.3f;
+        //                 break;
+        //             case 50:
+        //                 pitch = 1.6f;
+        //                 break;
+        //         }
+        //
+        //         GameGlobals.Instance.audioController.playSoundPitched("UIQuestion", pitch);
+        //         GameGlobals.Instance.achievements.increaseScore(selectedPoint);
+        //
+        //         Transform pointsRoot = createdEffetc.transform.Find("pointsGroup");
+        //         if (pointsRoot != null){
+        //             foreach (Transform point in pointsRoot){
+        //                 if (point.name.Equals(selectedPoint.ToString())){
+        //                     point.gameObject.SetActive(true);
+        //                 }
+        //                 else{
+        //                     point.gameObject.SetActive(false);
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     public void doAnCameraEffect(){
