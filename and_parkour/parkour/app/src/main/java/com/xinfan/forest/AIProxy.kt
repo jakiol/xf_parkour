@@ -286,6 +286,11 @@ object AIProxy {
 
 
     fun notifyDownload() {
+//        // Mock
+//        courseId = "70004";
+//        downloadUrl = "https://duer-mirror.cdn.bcebos.com/game_model/ONLINE/70004/middle_left/1652338058/70004.zip"
+//        md5 = "ae233dfa8c75cc66f0dfe5518721a2ea";
+
         Log.i(MainActivity.TAG, "模型数据 - ${courseId} - ${downloadUrl} - ${md5}")
         aiServiceClient.notifyCourse(
             courseId,

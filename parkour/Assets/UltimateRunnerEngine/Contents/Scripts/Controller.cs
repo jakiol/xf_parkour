@@ -143,7 +143,6 @@ public class Controller : MonoBehaviour{
             //左右
 
             float midX;
-            Debug.Log("左右执行..." + UserData.screenWidth);
             if (UserData.screenWidth > 800)
             {
                 midX = (person.skeletons.leftShoulder.x + person.skeletons.rightShoulder.x) * 0.5f;
@@ -152,30 +151,42 @@ public class Controller : MonoBehaviour{
             {
                 midX = (person.skeletons.leftShoulder.x + person.skeletons.rightShoulder.x) * 0.5f * 0.6f;
             }
-
+            Debug.Log("controller---midx::" + midX);
             smoothMid = Mathf.Clamp01(midX / Screen.width);
-            
+            Debug.Log("controller---smoothMid::" + smoothMid);
             float halfCW = 0.1f; // center_w_slider.value * 0.5f;
             float tolerance = 0.02f; // tolerance_slider.value;
+
+            /* 整体的区间:
+             * 右边  x >0.602
+             * 左边 x < 0.38
+             * 中间  0.38< x < 0.602
+             */
             switch (playerPath){
                 case -1:
                     if (smoothMid > 0.5f - halfCW + tolerance){
+                        Debug.Log("controller---001::::从左边去中间" + smoothMid);
                         SetLocal(Local.Center);
                         playerPath = 0;
                     }
                     break;
                 case 0:
+                    // 从中间去左边或者去右边的逻辑
                     if (smoothMid > 0.5f + halfCW + tolerance){
+                        Debug.Log("controller---001::::从中间去右边" + smoothMid);
                         SetLocal(Local.Right);
                         playerPath = 1;
                     }
                     if (smoothMid < 0.5f - halfCW - tolerance){
+                        Debug.Log("controller---002::::从中间去左边" + smoothMid);
+
                         SetLocal(Local.Left);
                         playerPath = -1;
                     }
                     break;
                 case 1:
                     if (smoothMid < 0.5f + halfCW - tolerance){
+                        Debug.Log("controller---001::::从右边去中间" + smoothMid);
                         SetLocal(Local.Center);
                         playerPath = 0;
                     }
@@ -336,6 +347,7 @@ public class Controller : MonoBehaviour{
 
         if (isOpenTargetLocal){
             var currLocal = trackIndex == -1 ? Local.Left : trackIndex == 1 ? Local.Right : Local.Center;
+            Debug.Log("controller---currLocal" + currLocal + " targetLocal:::" + targetLocal);
             if (currLocal != targetLocal){
                 Debug.Log($">> change local:{currLocal} {targetLocal} {isGameOver}");
                 switch (currLocal){
@@ -405,6 +417,8 @@ public class Controller : MonoBehaviour{
         peakPosition = ApplyYMovement(peakPosition);
 
         // Move our character!
+        // 这里是移动位置么???
+        Debug.Log("controller---peakPosition--" + peakPosition);
         characterController.Move(peakPosition);
 
         playerZ = player.transform.position.z;
@@ -821,14 +835,14 @@ public class Controller : MonoBehaviour{
 
             case TouchController.SwipeDirection.Left:
                 GameGlobals.Instance.audioController.stopSound("PlayerDuck", false);
-
+                Debug.Log("controller---确定向左移动");
                 doChangeLane(-1, laneChangeTime);
                 break;
 
             case TouchController.SwipeDirection.Right:
                 GameGlobals.Instance.audioController.stopSound("PlayerDuck", false);
 
-
+                Debug.Log("controller---确定向右移动");
                 doChangeLane(1, laneChangeTime);
                 break;
         }
